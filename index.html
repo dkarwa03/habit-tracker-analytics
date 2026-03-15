@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<title>HabitAI</title>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+
+*{
+box-sizing:border-box;
+}
+
+html,body{
+height:100%;
+margin:0;
+}
+
+body{
+font-family:Segoe UI;
+transition:0.3s;
+display:flex;
+flex-direction:column;
+}
+
+.dark{
+background:#0f172a;
+color:white;
+}
+
+.light{
+background:#f5f5f5;
+color:#111;
+}
+
+header{
+padding:16px 20px;
+display:flex;
+justify-content:space-between;
+align-items:center;
+font-size:22px;
+font-weight:600;
+background:linear-gradient(90deg,#6366f1,#22c55e);
+color:white;
+flex-shrink:0;
+}
+
+.credit{
+font-size:12px;
+opacity:0.8;
+}
+
+.tabs{
+display:flex;
+gap:15px;
+justify-content:center;
+padding:15px;
+flex-shrink:0;
+}
+
+.tab{
+padding:8px 16px;
+border-radius:6px;
+cursor:pointer;
+}
+
+.dark .tab{
+background:#1e293b;
+color:white;
+}
+
+.light .tab{
+background:#e0e0e0;
+color:#111;
+}
+
+.tab.active{
+background:#6366f1;
+color:white;
+}
+
+.container{
+flex:1;
+overflow:hidden;
+display:flex;
+}
+
+.tab-content{
+display:none;
+width:100%;
+height:100%;
+overflow-y:auto;
+padding:20px;
+}
+
+.tab-content.active{
+display:flex;
+flex-direction:column;
+}
+
+button{
+padding:7px 12px;
+border:none;
+border-radius:6px;
+background:#6366f1;
+color:white;
+cursor:pointer;
+align-self:fit-content;
+}
+
+input{
+padding:7px;
+border-radius:5px;
+border:none;
+margin-right:10px;
+}
+
+select{
+padding:7px;
+border-radius:5px;
+border:none;
+margin-right:10px;
+}
+
+table{
+border-collapse:collapse;
+width:100%;
+margin-top:10px;
+font-size:12px;
+overflow-y:auto;
+}
+
+th,td{
+border:1px solid #444;
+padding:4px;
+text-align:center;
+}
+
+.dark th{
+background:#334155;
+color:white;
+}
+
+.light th{
+background:#ddd;
+color:#111;
+}
+
+.summary-grid{
+display:grid;
+grid-template-columns:1fr 1fr 1fr;
+gap:20px;
+margin-top:20px;
+}
+
+.chart-box{
+padding:15px;
+border-radius:8px;
+}
+
+.dark .chart-box{
+background:#1e293b;
+}
+
+.light .chart-box{
+background:white;
+}
+
+.card-grid{
+display:grid;
+grid-template-columns:repeat(4,1fr);
+gap:20px;
+margin-bottom:20px;
+flex-shrink:0;
+}
+
+.card{
+padding:20px;
+border-radius:10px;
+text-align:center;
+}
+
+.dark .card{
+background:#1e293b;
+}
+
+.light .card{
+background:white;
+}
+
+.ai-box{
+padding:20px;
+border-radius:10px;
+margin-top:20px;
+flex-shrink:0;
+}
+
+.dark .ai-box{
+background:#1e293b;
+}
+
+.light .ai-box{
+background:white;
+}
+
+ul{
+list-style:none;
+padding:0;
+}
+
+li{
+padding:6px;
+}
+
+.dark li{
+border-bottom:1px solid #334155;
+}
+
+.light li{
+border-bottom:1px solid #ddd;
+}
+
+</style>
+
+</head>
+
+
+<body class="dark">
+
+<header>
+
+<div>🤖 HabitAI</div>
+
+<div>
+<button onclick="toggleTheme()">🌗 Theme</button>
+<span class="credit">built by deepak kumar</span>
+</div>
+
+</header>
+
+
+<div class="tabs">
+
+<div class="tab active" onclick="showTab('tracker')">📋 Tracker</div>
+
+<div class="tab" onclick="showTab('dashboard')">📊 Dashboard</div>
+
+</div>
+
+
+<div class="container">
+
+<div id="trackerTab" class="tab-content active">
+
+<div>
+<input id="habitInput" placeholder="Add habit (🏃 Run)">
+<button onclick="addHabit()">Add Habit</button>
+<select id="monthSelect" onchange="render()">
+<option value="0">January</option>
+<option value="1">February</option>
+<option value="2">March</option>
+<option value="3">April</option>
+<option value="4">May</option>
+<option value="5">June</option>
+<option value="6">July</option>
+<option value="7">August</option>
+<option value="8">September</option>
+<option value="9">October</option>
+<option value="10">November</option>
+<option value="11">December</option>
+</select>
+</div>
+
+<table id="habitTable">
+
+<thead>
+<tr>
+<th>Habit</th>
+</tr>
+</thead>
+
+<tbody id="habitRows"></tbody>
+
+</table>
+
+<div class="summary-grid">
+
+<div class="chart-box">
+<h3>📈 Daily Trend</h3>
+<canvas id="trendChart"></canvas>
+</div>
+
+<div class="chart-box">
+<h3>📊 Weekly Summary</h3>
+<canvas id="weeklyChart"></canvas>
+</div>
+
+<div class="chart-box">
+<h3>🎯 Completion Rate</h3>
+<canvas id="donutChart"></canvas>
+</div>
+
+</div>
+
+</div>
+
+
+<div id="dashboardTab" class="tab-content">
+
+<div class="card-grid">
+
+<div class="card">
+🔥 Current Streak
+<br>
+<b id="streak"></b>
+</div>
+
+<div class="card">
+📊 Completion Rate
+<br>
+<b id="success"></b>
+</div>
+
+<div class="card">
+🏆 Best Habit
+<br>
+<b id="bestHabit"></b>
+</div>
+
+<div class="card">
+⚠️ Needs Attention
+<br>
+<b id="weakHabit"></b>
+</div>
+
+</div>
+
+
+<div class="summary-grid">
+
+<div class="chart-box">
+<h3>📅 Weekly Consistency</h3>
+<canvas id="dashboardWeekly"></canvas>
+</div>
+
+
+<div class="chart-box">
+<h3>🏆 Habit Leaderboard</h3>
+<ul id="habitRanking"></ul>
+</div>
+
+
+<div class="chart-box">
+<h3>📈 Productivity Pattern</h3>
+<canvas id="productivityChart"></canvas>
+</div>
+
+</div>
+
+
+<div class="ai-box" id="aiBox">
+
+AI executive insights loading...
+
+</div>
+
+</div>
+
+</div>
+
+
+<script>
+
+let habits=JSON.parse(localStorage.getItem("habits"))||[
+"🏃 Exercise",
+"📚 Study",
+"🧘 Meditation"
+];
+
+const year=new Date().getFullYear();
+
+function getDaysInMonth(month){
+return new Date(year,parseInt(month)+1,0).getDate();
+}
+
+function toggleTheme(){
+
+let body=document.body;
+
+if(body.classList.contains("dark")){
+body.classList.remove("dark");
+body.classList.add("light");
+}else{
+body.classList.remove("light");
+body.classList.add("dark");
+}
+
+}
+
+function addHabit(){
+
+let h=document.getElementById("habitInput").value;
+
+if(!h)return;
+
+habits.push(h);
+
+localStorage.setItem("habits",JSON.stringify(habits));
+
+document.getElementById("habitInput").value="";
+
+render();
+
+}
+
+function deleteHabit(index){
+
+if(confirm(`Delete "${habits[index]}"?`)){
+
+habits.splice(index,1);
+
+localStorage.setItem("habits",JSON.stringify(habits));
+
+render();
+
+}
+
+}
+
+function render(){
+
+const tbody=document.getElementById("habitRows");
+
+tbody.innerHTML="";
+
+let month=document.getElementById("monthSelect").value;
+
+let days=getDaysInMonth(month);
+
+let tableHead=document.querySelector("#habitTable thead tr");
+
+if(!tableHead){
+let thead=document.createElement("thead");
+let tr=document.createElement("tr");
+thead.appendChild(tr);
+document.getElementById("habitTable").appendChild(thead);
+tableHead=tr;
+}
+
+tableHead.innerHTML="<th>Habit</th>";
+
+for(let d=1;d<=days;d++){
+let th=document.createElement("th");
+th.innerText=d;
+tableHead.appendChild(th);
+}
+
+habits.forEach((habit,i)=>{
+
+let tr=document.createElement("tr");
+
+let name=document.createElement("td");
+
+name.style.display="flex";
+
+name.style.justifyContent="space-between";
+
+name.style.alignItems="center";
+
+let habitText=document.createElement("span");
+
+habitText.innerText=habit;
+
+let deleteBtn=document.createElement("button");
+
+deleteBtn.innerText="🗑️";
+
+deleteBtn.style.padding="4px 8px";
+
+deleteBtn.style.fontSize="12px";
+
+deleteBtn.onclick=()=>deleteHabit(i);
+
+name.appendChild(habitText);
+
+name.appendChild(deleteBtn);
+
+tr.appendChild(name);
+
+for(let d=1;d<=days;d++){
+
+let td=document.createElement("td");
+
+let check=document.createElement("input");
+
+check.type="checkbox";
+
+let key=`habit-${month}-${i}-${d}`;
+
+check.checked=localStorage.getItem(key)==="true";
+
+check.addEventListener("change",()=>{
+
+localStorage.setItem(key,check.checked);
+
+updateStats();
+
+});
+
+td.appendChild(check);
+
+tr.appendChild(td);
+
+}
+
+tbody.appendChild(tr);
+
+});
+
+updateStats();
+
+}
+
+function updateStats(){
+
+let checks=document.querySelectorAll("input[type='checkbox']");
+
+let total=checks.length;
+
+let done=0;
+
+checks.forEach(c=>{
+if(c.checked)done++;
+});
+
+let percent=Math.round((done/total)*100);
+
+document.getElementById("success").innerText=percent+"%";
+
+document.getElementById("streak").innerText=Math.floor(percent*0.7);
+
+generateCharts(percent);
+
+executiveAnalysis(percent);
+
+}
+
+function generateCharts(percent){
+
+let month=document.getElementById("monthSelect").value;
+
+let days=getDaysInMonth(month);
+
+let daily=new Array(days).fill(0);
+
+habits.forEach((h,i)=>{
+
+for(let d=1;d<=days;d++){
+
+if(localStorage.getItem(`habit-${month}-${i}-${d}`)==="true")
+daily[d-1]++;
+
+}
+
+});
+
+if(window.chart1)chart1.destroy();
+
+chart1=new Chart(document.getElementById("trendChart"),{
+
+type:"line",
+
+data:{
+labels:Array.from({length:days},(_,i)=>i+1),
+datasets:[{
+label:"Daily completion",
+data:daily,
+tension:0.4
+}]
+}
+
+});
+
+let weekly=[0,0,0,0];
+
+daily.forEach((v,i)=>{
+weekly[Math.floor(i/7)]+=v;
+});
+
+if(window.chart2)chart2.destroy();
+
+chart2=new Chart(document.getElementById("weeklyChart"),{
+
+type:"bar",
+
+data:{
+labels:["Week1","Week2","Week3","Week4"],
+datasets:[{
+data:weekly
+}]
+}
+
+});
+
+if(window.chart3)chart3.destroy();
+
+chart3=new Chart(document.getElementById("donutChart"),{
+
+type:"doughnut",
+
+data:{
+labels:["Completed","Remaining"],
+datasets:[{
+data:[percent,100-percent]
+}]
+}
+
+});
+
+if(window.chart4)chart4.destroy();
+
+chart4=new Chart(document.getElementById("dashboardWeekly"),{
+
+type:"bar",
+
+data:{
+labels:["Week1","Week2","Week3","Week4"],
+datasets:[{
+data:weekly
+}]
+}
+
+});
+
+if(window.chart5)chart5.destroy();
+
+chart5=new Chart(document.getElementById("productivityChart"),{
+
+type:"line",
+
+data:{
+labels:["Mon","Tue","Wed","Thu","Fri","Sat","Sun"],
+datasets:[{
+data:[daily[0],daily[1],daily[2],daily[3],daily[4],daily[5],daily[6]],
+tension:0.4
+}]
+}
+
+});
+
+}
+
+function executiveAnalysis(percent){
+
+let month=document.getElementById("monthSelect").value;
+
+let days=getDaysInMonth(month);
+
+let habitScores=[];
+
+habits.forEach((h,i)=>{
+
+let count=0;
+
+for(let d=1;d<=days;d++){
+
+if(localStorage.getItem(`habit-${month}-${i}-${d}`)==="true")count++;
+
+}
+
+habitScores.push({habit:h,score:count});
+
+});
+
+habitScores.sort((a,b)=>b.score-a.score);
+
+document.getElementById("bestHabit").innerText=habitScores[0].habit;
+
+document.getElementById("weakHabit").innerText=habitScores[habitScores.length-1].habit;
+
+let ranking=document.getElementById("habitRanking");
+
+ranking.innerHTML="";
+
+habitScores.forEach((h,i)=>{
+
+let li=document.createElement("li");
+
+li.innerText=`${i+1}. ${h.habit} (${h.score})`;
+
+ranking.appendChild(li);
+
+});
+
+let insight="";
+
+if(percent>80)
+insight="🚀 Excellent discipline. Your habits are very consistent.";
+
+else if(percent>60)
+insight="👍 Good progress. Increasing streak consistency will boost productivity.";
+
+else if(percent>40)
+insight="⚠️ Moderate performance. Consider focusing on fewer habits.";
+
+else
+insight="🔥 Momentum is low. Start with 2–3 core habits daily.";
+
+document.getElementById("aiBox").innerText="🤖 AI Executive Insight: "+insight;
+
+}
+
+function showTab(tab){
+
+document.querySelectorAll(".tab-content").forEach(t=>t.classList.remove("active"));
+
+document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
+
+if(tab==="tracker"){
+document.getElementById("trackerTab").classList.add("active");
+document.querySelector(".tab:first-of-type").classList.add("active");
+}else{
+document.getElementById("dashboardTab").classList.add("active");
+document.querySelector(".tab:nth-of-type(2)").classList.add("active");
+}
+
+}
+
+render();
+
+</script>
+
+</body>
+
+</html>
